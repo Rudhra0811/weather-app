@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Weather App</title>
+    <title>Weather App</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
-        <h1>Advanced Weather App</h1>
+        <h1>Weather App</h1>
         <div class="search-container">
             <input type="text" id="city-input" placeholder="Enter city name">
             <button id="search-btn">Search</button>
+        </div>
+        <button id="geolocation-btn">Use My Location</button>
+        <div class="unit-toggle">
+            <button id="celsius-btn" class="active">°C</button>
+            <button id="fahrenheit-btn">°F</button>
         </div>
         <div class="weather-info">
             <h2 id="city-name">City Name</h2>
@@ -54,4 +61,5 @@
     </div>
     <script src="app.js"></script>
 </body>
+
 </html>

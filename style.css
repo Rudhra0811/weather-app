@@ -49,18 +49,28 @@ h1 {
     border-color: #4CAF50;
 }
 
-#search-btn {
+#search-btn,
+#geolocation-btn {
     padding: 12px 24px;
     font-size: 16px;
     background-color: #4CAF50;
     color: white;
     border: none;
-    border-radius: 0 5px 5px 0;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
-#search-btn:hover {
+#search-btn {
+    border-radius: 0 5px 5px 0;
+}
+
+#geolocation-btn {
+    border-radius: 5px;
+    margin-left: 10px;
+}
+
+#search-btn:hover,
+#geolocation-btn:hover {
     background-color: #45a049;
 }
 
@@ -180,6 +190,35 @@ h1 {
     z-index: 1000;
 }
 
+.unit-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.unit-toggle button {
+    padding: 8px 16px;
+    font-size: 14px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.unit-toggle button:first-child {
+    border-radius: 5px 0 0 5px;
+}
+
+.unit-toggle button:last-child {
+    border-radius: 0 5px 5px 0;
+}
+
+.unit-toggle button.active {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
 @media (max-width: 600px) {
     .container {
         padding: 20px;
@@ -199,5 +238,12 @@ h1 {
 
     .weather-detail {
         flex-basis: calc(50% - 20px);
+    }
+
+    #geolocation-btn {
+        margin-left: 0;
+        margin-top: 10px;
+        border-radius: 5px;
+        width: 100%;
     }
 }

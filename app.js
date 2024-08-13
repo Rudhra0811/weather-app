@@ -3,8 +3,12 @@
 const API_KEY = 'bd827b5dd33b1072cde8dac5cab15ada';
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
+// DOM Elements
 const cityInput = document.getElementById('city-input');
 const searchBtn = document.getElementById('search-btn');
+const geolocationBtn = document.getElementById('geolocation-btn');
+const celsiusBtn = document.getElementById('celsius-btn');
+const fahrenheitBtn = document.getElementById('fahrenheit-btn');
 const cityName = document.getElementById('city-name');
 const temperature = document.getElementById('temperature');
 const weatherIcon = document.getElementById('weather-icon');
@@ -17,53 +21,64 @@ const visibility = document.getElementById('visibility');
 const uvIndex = document.getElementById('uv-index');
 const forecastContainer = document.getElementById('forecast-container');
 
-searchBtn.addEventListener('click', fetchWeatherData);
+// Global variables
+let currentUnit = 'metric';
+let currentWeatherData = null;
+let currentForecastData = null;
+
+// Event Listeners
+searchBtn.addEventListener('click', () => fetchWeatherData(cityInput.value));
 cityInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        fetchWeatherData();
+        fetchWeatherData(cityInput.value);
     }
 });
+geolocationBtn.addEventListener('click', useGeolocation);
+celsiusBtn.addEventListener('click', () => changeUnit('metric'));
+fahrenheitBtn.addEventListener('click', () => changeUnit('imperial'));
 
-function fetchWeatherData() {
-    const city = cityInput.value.trim();
+// Functions
+function fetchWeatherData(city) {
     if (!city) return;
 
     showLoading();
 
-    const currentWeatherUrl = `${BASE_URL}/weather?q=${city}&appid=${API_KEY}&units=metric`;
-    const forecastUrl = `${BASE_URL}/forecast?q=${city}&appid=${API_KEY}&units=metric`;
+    const currentWeatherUrl = `${BASE_URL}/weather?q=${city}&appid=${API_KEY}&units=${currentUnit}`;
+    const forecastUrl = `${BASE_URL}/forecast?q=${city}&appid=${API_KEY}&units=${currentUnit}`;
 
     Promise.all([
         fetch(currentWeatherUrl).then(handleErrors),
         fetch(forecastUrl).then(handleErrors)
     ])
-    .then(([currentWeatherResponse, forecastResponse]) => 
-        Promise.all([currentWeatherResponse.json(), forecastResponse.json()])
-    )
-    .then(([currentWeatherData, forecastData]) => {
-        updateCurrentWeather(currentWeatherData);
-        updateForecast(forecastData);
-        hideLoading();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to fetch weather data. Please try again.');
-        hideLoading();
-    });
+        .then(([currentWeatherResponse, forecastResponse]) =>
+            Promise.all([currentWeatherResponse.json(), forecastResponse.json()])
+        )
+        .then(([currentWeatherData, forecastData]) => {
+            updateCurrentWeather(currentWeatherData);
+            updateForecast(forecastData);
+            saveToLocalStorage(city);
+            hideLoading();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch weather data. Please try again.');
+            hideLoading();
+        });
 }
 
 function updateCurrentWeather(data) {
+    currentWeatherData = data;
     cityName.textContent = data.name;
-    temperature.textContent = `${Math.round(data.main.temp)}°C`;
+    updateTemperature(data.main.temp);
     weatherIcon.src = getWeatherIcon(data.weather[0].icon);
     weatherIcon.alt = data.weather[0].description;
     description.textContent = capitalizeWords(data.weather[0].description);
     humidity.textContent = `${data.main.humidity}%`;
-    windSpeed.textContent = `${convertWindSpeed(data.wind.speed)} km/h`;
+    windSpeed.textContent = `${convertWindSpeed(data.wind.speed)} ${currentUnit === 'metric' ? 'km/h' : 'mph'}`;
     pressure.textContent = `${data.main.pressure} hPa`;
-    feelsLike.textContent = `${Math.round(data.main.feels_like)}°C`;
+    updateFeelsLike(data.main.feels_like);
     visibility.textContent = `${(data.visibility / 1000).toFixed(1)} km`;
-    
+
     // Fetch UV Index data
     const lat = data.coord.lat;
     const lon = data.coord.lon;
@@ -71,6 +86,7 @@ function updateCurrentWeather(data) {
 }
 
 function updateForecast(data) {
+    currentForecastData = data;
     forecastContainer.innerHTML = '';
     const dailyForecasts = data.list.filter(item => item.dt_txt.includes('12:00:00'));
     dailyForecasts.slice(0, 5).forEach(forecast => {
@@ -89,7 +105,7 @@ function createForecastItem(forecast) {
     forecastItem.innerHTML = `
         <p class="forecast-date">${dayName}</p>
         <img class="forecast-icon" src="${getWeatherIcon(forecast.weather[0].icon)}" alt="${forecast.weather[0].description}">
-        <p class="forecast-temp">${Math.round(forecast.main.temp)}°C</p>
+        <p class="forecast-temp">${Math.round(forecast.main.temp)}°${currentUnit === 'metric' ? 'C' : 'F'}</p>
     `;
 
     return forecastItem;
@@ -109,6 +125,78 @@ function fetchUVIndex(lat, lon) {
         });
 }
 
+function useGeolocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                fetchWeatherDataByCoords(lat, lon);
+            },
+            error => {
+                console.error('Geolocation error:', error);
+                alert('Unable to retrieve your location. Please enter a city name.');
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser. Please enter a city name.');
+    }
+}
+
+function fetchWeatherDataByCoords(lat, lon) {
+    showLoading();
+
+    const currentWeatherUrl = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${currentUnit}`;
+    const forecastUrl = `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=${currentUnit}`;
+
+    Promise.all([
+        fetch(currentWeatherUrl).then(handleErrors),
+        fetch(forecastUrl).then(handleErrors)
+    ])
+        .then(([currentWeatherResponse, forecastResponse]) =>
+            Promise.all([currentWeatherResponse.json(), forecastResponse.json()])
+        )
+        .then(([currentWeatherData, forecastData]) => {
+            updateCurrentWeather(currentWeatherData);
+            updateForecast(forecastData);
+            saveToLocalStorage(currentWeatherData.name);
+            hideLoading();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch weather data. Please try again.');
+            hideLoading();
+        });
+}
+
+function changeUnit(unit) {
+    if (currentUnit === unit) return;
+    currentUnit = unit;
+    updateUnitButtons();
+    if (currentWeatherData) {
+        updateCurrentWeather(currentWeatherData);
+        updateForecast(currentForecastData);
+    }
+}
+
+function updateUnitButtons() {
+    if (currentUnit === 'metric') {
+        celsiusBtn.classList.add('active');
+        fahrenheitBtn.classList.remove('active');
+    } else {
+        celsiusBtn.classList.remove('active');
+        fahrenheitBtn.classList.add('active');
+    }
+}
+
+function updateTemperature(temp) {
+    temperature.textContent = `${Math.round(temp)}°${currentUnit === 'metric' ? 'C' : 'F'}`;
+}
+
+function updateFeelsLike(temp) {
+    feelsLike.textContent = `${Math.round(temp)}°${currentUnit === 'metric' ? 'C' : 'F'}`;
+}
+
 function handleErrors(response) {
     if (!response.ok) {
         throw Error(response.statusText);
@@ -121,7 +209,11 @@ function capitalizeWords(str) {
 }
 
 function convertWindSpeed(speed) {
-    return (speed * 3.6).toFixed(1);
+    if (currentUnit === 'metric') {
+        return (speed * 3.6).toFixed(1); // Convert m/s to km/h
+    } else {
+        return speed.toFixed(1); // Already in mph
+    }
 }
 
 function getWeatherIcon(iconCode) {
@@ -142,8 +234,23 @@ function hideLoading() {
     }
 }
 
-// Initial weather data fetch for a default city
+function saveToLocalStorage(city) {
+    localStorage.setItem('lastSearchedCity', city);
+}
+
+function loadFromLocalStorage() {
+    const lastSearchedCity = localStorage.getItem('lastSearchedCity');
+    if (lastSearchedCity) {
+        cityInput.value = lastSearchedCity;
+        fetchWeatherData(lastSearchedCity);
+    } else {
+        // Default city if no last search
+        fetchWeatherData('London');
+    }
+}
+
+// Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
-    cityInput.value = 'London';
-    fetchWeatherData();
+    loadFromLocalStorage();
+    updateUnitButtons();
 });
