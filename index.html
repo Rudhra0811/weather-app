@@ -3,29 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather App</title>
+    <title>Advanced Weather App</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Weather App</h1>
+        <h1>Advanced Weather App</h1>
         <div class="search-container">
             <input type="text" id="city-input" placeholder="Enter city name">
             <button id="search-btn">Search</button>
         </div>
         <div class="weather-info">
-            <h2>Weather in <span id="city-name">City Name</span></h2>
-            <p id="temperature">Temperature: --°C</p>
-            <p id="description">Description: --</p>
+            <h2 id="city-name">City Name</h2>
+            <img id="weather-icon" class="weather-icon" src="" alt="Weather Icon">
+            <p id="temperature" class="temperature">--°C</p>
+            <p id="description" class="description">Weather Description</p>
             <div class="weather-details">
-                <div>
+                <div class="weather-detail">
                     <h3>Humidity</h3>
                     <p id="humidity">--%</p>
                 </div>
-                <div>
+                <div class="weather-detail">
                     <h3>Wind Speed</h3>
-                    <p id="wind-speed">-- m/s</p>
+                    <p id="wind-speed">-- km/h</p>
                 </div>
+                <div class="weather-detail">
+                    <h3>Pressure</h3>
+                    <p id="pressure">-- hPa</p>
+                </div>
+                <div class="weather-detail">
+                    <h3>Feels Like</h3>
+                    <p id="feels-like">--°C</p>
+                </div>
+                <div class="weather-detail">
+                    <h3>Visibility</h3>
+                    <p id="visibility">-- km</p>
+                </div>
+                <div class="weather-detail">
+                    <h3>UV Index</h3>
+                    <p id="uv-index">--</p>
+                </div>
+            </div>
+        </div>
+        <div class="forecast">
+            <h3>5-Day Forecast</h3>
+            <div id="forecast-container" class="forecast-container">
+                <!-- Forecast items will be added here dynamically -->
             </div>
         </div>
     </div>
